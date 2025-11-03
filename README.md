@@ -175,6 +175,7 @@ ggsave("results/archetype_alpha_box.png", width=4.6, height=3.3, dpi=300)
 
 
 
+
 # TCGA 
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 BiocManager::install(c("TCGAbiolinks", "SummarizedExperiment", "GSVA", "GSEABase"))
@@ -235,9 +236,8 @@ library(PDSclassifier)
 pds_calls <- PDSpredict(rna_df2_filtered, species = 'human', threshold = 0.6)
 smi_data <- calculateSMI(as.matrix(testdata[,-1]), datatype = "bulk", species = "human")
 
-# Multi-Omics
-# mixOmics, limma, ggplot2
 
+# Multi-Omics
 suppressPackageStartupMessages({
   library(mixOmics)
   library(limma)
@@ -264,7 +264,6 @@ plotIndiv(plsda_model,
           legend = TRUE,
           ellipse = TRUE, ellipse.level = 0.95)
 
-# sPLS-DA on the same matrix
 keepX <- c(30, 30)
 splsda_model <- splsda(X = t(X), Y = group, ncomp = 2, keepX = keepX)
 plotIndiv(splsda_model,
