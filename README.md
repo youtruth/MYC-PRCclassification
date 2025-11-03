@@ -1,4 +1,4 @@
-# 1
+# Complex heatmap 
 #Complexheatmap
 setwd("C://Users/samsung/Desktop")
 data1 <- read.table("Drug_rawdata.txt", header = TRUE, sep = "\t", row.names = 1)
