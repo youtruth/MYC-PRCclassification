@@ -41,7 +41,7 @@ drug_category <- drug_category_df$Category
 
 
 
-heatmap_drugs <- data.frame(Drug = colnames(sorted_drug_data))  # Heatmap의 약물 리스트
+heatmap_drugs <- data.frame(Drug = colnames(sorted_drug_data))  
 drug_category_df <- merge(heatmap_drugs, drug_category_map, by = "Drug", all.x = TRUE)
 drug_category <- drug_category_df$Category
 category_ha <- rowAnnotation(Category = drug_category, col = list(Category = category_colors))
@@ -66,7 +66,7 @@ Heatmap(t(sorted_drug_data),
 # Archytype Analysis
 dir.create("results/signatures", showWarnings = FALSE)
 
-# -------------------- Packages --------------------
+
 req_cran <- c("tidyverse","matrixStats","glmnet","ggrepel")
 for(p in req_cran) if(!requireNamespace(p, quietly=TRUE)) install.packages(p)
 invisible(lapply(req_cran, library, character.only=TRUE))
@@ -75,7 +75,7 @@ if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManage
 bio_pkgs <- c("edgeR","archetypes","depmap","ExperimentHub")
 for (bp in bio_pkgs) if (!requireNamespace(bp, quietly=TRUE)) BiocManager::install(bp, ask=FALSE, update=FALSE)
 BiocManager::install("depmap")
-# -------------------- 0) Load data --------------------
+
 grp <- readr::read_tsv("MYC_PRC_group_info.txt", col_types = "cc") %>%
   setNames(c("sample","subtype")) %>%
   mutate(subtype = toupper(subtype))
@@ -85,7 +85,7 @@ if (!"gene" %in% names(cnt)) {
   nm <- names(cnt); names(cnt)[1] <- "gene"
 }
 
-# 공통 샘플 정렬
+
 samples <- intersect(grp$sample, setdiff(names(cnt), "gene"))
 stopifnot(length(samples) >= 20)
 grp <- grp %>% filter(sample %in% samples) %>% slice(match(samples, sample))
@@ -93,7 +93,7 @@ expr <- cnt %>% select(all_of(c("gene", samples))) %>% distinct(gene, .keep_all 
 mat <- as.matrix(expr[,-1]); rownames(mat) <- expr$gene
 
 
-# CPM + log2; 
+
 libsize <- colSums(mat)
 cpm <- t(t(mat) / libsize * 1e6)
 logcpm <- log2(cpm + 1)
@@ -102,21 +102,13 @@ vars <- matrixStats::rowVars(logcpm); logcpm <- logcpm[vars > 0, , drop=FALSE]
 # -------------------- 2) Conformal (CV+, 5-fold, alpha=0.10) --------------------
 alpha <- 0.10
 y <- ifelse(grp$subtype == "MYC", 1, 0)
-
-
-
-
 X <- t(logcpm[top, , drop=FALSE])   # samples x genes
 X <- scale(X)                   
 X <- X[, apply(X, 2, function(z) sd(z, na.rm=TRUE) > 0), drop=FALSE]
 X[!is.finite(X)] <- 0
 
 
-stopifnot(nrow(X) == length(y))     # 행 = 샘플 수
-
-
-
-
+stopifnot(nrow(X) == length(y))    
 K <- 5
 foldid <- sample(rep_len(1:K, length.out=length(y)))
 
@@ -153,7 +145,7 @@ conf_counts <- conf_counts %>%
   dplyr::arrange(prediction_set)
 
 
-readr::write_csv(conf_counts, "박사님/conformal_set_counts.csv")
+readr::write_csv(conf_counts, "/conformal_set_counts.csv")
 
 
 
@@ -171,7 +163,7 @@ coef_mat <- coef(aa)
 
 
 coef_mat <- as.matrix(coef_mat)
-storage.mode(coef_mat) <- "double"           # numeric 보장
+storage.mode(coef_mat) <- "double"          
 
 
 grp2 <- grp[ match(rownames(coef_mat), grp$sample), , drop=FALSE ]
@@ -221,8 +213,6 @@ library(SummarizedExperiment)
 library(GSVA)
 library(GSEABase)
 
-
-
 if(!requireNamespace("devtools", quietly = TRUE))
   install.packages("devtools")
 devtools::install_github('sidmall/PDSclassifier')
@@ -237,7 +227,6 @@ options <- GDCquery(
 )
 
 options
-
 data_path <- "C:/Users/USER/Desktop/GDCdata"
 
 
