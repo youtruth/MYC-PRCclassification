@@ -285,9 +285,9 @@ suppressPackageStartupMessages({
   library(limma)
 })
 
-############################
+
 # 1) Load data
-############################
+
 # path/to files (tab-delimited; rows = features, cols = samples)
 expr_path   <- "rawdata.txt"   # matrix: features x samples
 meta_path   <- "sample_list.txt"      # data.frame: samples x covariates (must include 'group' and optional 'CMS')
@@ -303,10 +303,9 @@ meta <- meta[common_samples, , drop = FALSE]
 # Factors
 group <- factor(meta$group)
 
-############################
+
 # 2) PLS-DA / sPLS-DA (mixOmics)
-############################
-# PLS-DA on full matrix
+
 plsda_model <- plsda(X = t(X), Y = group, ncomp = 2)  # mixOmics expects samples in rows
 plotIndiv(plsda_model,
           group = group,
@@ -324,10 +323,6 @@ plotIndiv(splsda_model,
           legend = TRUE,
           ellipse = TRUE, ellipse.level = 0.95)
 
-############################
-# 3) limma differential analysis
-############################
-# limma expects features x samples
 design <- model.matrix(~ group)
 fit <- lmFit(X, design)
 fit <- eBayes(fit)
@@ -337,27 +332,24 @@ res_sig <- topTable(fit, coef = 2, p.value = 0.005, number = Inf)
 write.table(res_all, file = "limma_results_all.txt", sep = "\t", quote = FALSE)
 write.table(res_sig, file = "limma_results_p0.005.txt", sep = "\t", quote = FALSE)
 
-############################
-# 4) DIABLO (block.splsda)
-############################
+
+# DIABLO (block.splsda)
+
 # Load multi-omics wide table if needed
 # omixs_raw columns must be well-defined ranges (adjust indices to your file)
 omixs_raw <- read.table("PDS_DIABLO_raw.txt", header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
 
-# Example: fix a column name that starts with a number
-# Do this AFTER loading the data
+
 if ("X5FU" %in% colnames(omixs_raw)) {
   colnames(omixs_raw)[colnames(omixs_raw) == "X5FU"] <- "5FU"
 }
 
-# Define blocks (adjust the column ranges to your actual file)
-# These are placeholders; replace with the correct column indices or names
+
 drug_block    <- omixs_raw[, 23:,   drop = FALSE]
 rna_block     <- omixs_raw[, 54:, drop = FALSE]
 pathway_block <- omixs_raw[, c70:, drop = FALSE]  # verify this range is what you intend
 wes_block     <- omixs_raw[, 98:,  drop = FALSE]
 
-# Align samples to meta/group
 common_samps2 <- intersect(rownames(drug_block), rownames(meta))
 drug_block    <- drug_block[common_samps2, , drop = FALSE]
 rna_block     <- rna_block[common_samps2, , drop = FALSE]
@@ -372,7 +364,6 @@ data_list <- list(
   WES        = wes_block
 )
 
-# Design matrix: off-diagonal correlation strength among blocks
 design <- matrix(0.1, nrow = length(data_list), ncol = length(data_list))
 diag(design) <- 0
 colnames(design) <- rownames(design) <- names(data_list)
@@ -380,12 +371,12 @@ colnames(design) <- rownames(design) <- names(data_list)
 # Fit DIABLO
 diablo_model <- block.splsda(X = data_list, Y = group2, design = design, ncomp = 2)
 
-# Quick plots
+
 plotIndiv(diablo_model, group = group2, legend = TRUE, title = "DIABLO: all blocks",
           ellipse = TRUE, ellipse.level = 0.95)
 plotVar(diablo_model, comp = 1)  # variables contributing to comp 1 (all blocks)
 
-# KeepX per block (tune as needed; names must match blocks)
+
 keepX_list <- list(
   Expression = 15,
   Drug       = 10,
@@ -394,18 +385,18 @@ keepX_list <- list(
 )
 diablo_model_top <- block.splsda(X = data_list, Y = group2, design = design, ncomp = 2, keepX = keepX_list)
 
-# Performance (can be time-consuming; adjust folds/repeats)
+
 set.seed(123)
 perf_result <- perf(diablo_model_top, validation = "Mfold", folds = 5, nrepeat = 5)
 plot(perf_result, criterion = "BER")
 
-# Example downstream visualizations
+
 plotArrow(diablo_model_top, group = group2, legend = TRUE, title = "DIABLO arrow plot")
 network(diablo_model_top, cutoff = 0.7)        # network of correlated features
 circosPlot(diablo_model_top, comp = 1, cutoff = 0.7, showIntraLinks = TRUE)
 cimDiablo(diablo_model_top, comp = 1, legend = TRUE, cluster = "both", title = "CIM for DIABLO")
 
-# Loadings per block (filter example: abs(loading) > 0.1)
+
 load_drug <- diablo_model_top$loadings$Drug
 load_rna  <- diablo_model_top$loadings$Expression
 load_path <- diablo_model_top$loadings$Pathway
@@ -422,10 +413,8 @@ plotLoadings(diablo_model_top, block = "Expression", comp = 1, contrib = "max")
 plotLoadings(diablo_model_top, block = "Pathway",    comp = 1, contrib = "max")
 plotLoadings(diablo_model_top, block = "WES",        comp = 1, contrib = "max")
 
-############################
-# 5) Optional: PDS / CMS coloring for DIABLO scores
-############################
-# If you want consistent ellipses, prefer mixOmics::plotIndiv(…, ellipse=TRUE) over manual ellipse math.
+
+
 
 if (!is.null(meta$PDS)) {
   pds <- factor(meta[common_samps2, "PDS"])
