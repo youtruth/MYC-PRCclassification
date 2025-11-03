@@ -243,7 +243,6 @@ suppressPackageStartupMessages({
   library(limma)
 })
 
-
 # 1) Load data
 # path/to files (tab-delimited; rows = features, cols = samples)
 expr_path   <- "rawdata.txt"  
@@ -251,14 +250,11 @@ meta_path   <- "sample_list.txt"
 X <- read.table(expr_path, header = TRUE, sep = "\t", na.strings = "NA", fill = TRUE, row.names = 1, check.names = FALSE)
 meta <- read.table(meta_path, header = TRUE, sep = "\t", na.strings = "NA", fill = TRUE, row.names = 1, check.names = FALSE)
 
-# Ensure column/sample alignment
 common_samples <- intersect(colnames(X), rownames(meta))
 X   <- X[, common_samples, drop = FALSE]
 meta <- meta[common_samples, , drop = FALSE]
 
-# Factors
 group <- factor(meta$group)
-
 
 # 2) PLS-DA / sPLS-DA (mixOmics)
 plsda_model <- plsda(X = t(X), Y = group, ncomp = 2)  # mixOmics expects samples in rows
@@ -268,8 +264,7 @@ plotIndiv(plsda_model,
           legend = TRUE,
           ellipse = TRUE, ellipse.level = 0.95)
 
-# sPLS-DA on the same matrix (example keepX)
-# Adjust keepX per component as needed (number of selected variables)
+# sPLS-DA on the same matrix
 keepX <- c(30, 30)
 splsda_model <- splsda(X = t(X), Y = group, ncomp = 2, keepX = keepX)
 plotIndiv(splsda_model,
@@ -287,11 +282,7 @@ res_sig <- topTable(fit, coef = 2, p.value = 0.005, number = Inf)
 write.table(res_all, file = "limma_results_all.txt", sep = "\t", quote = FALSE)
 write.table(res_sig, file = "limma_results_p0.005.txt", sep = "\t", quote = FALSE)
 
-
-# DIABLO (block.splsda)
-# Load multi-omics wide table if needed
 omixs_raw <- read.table("DIABLO_raw.txt", header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
-
 
 if ("X5FU" %in% colnames(omixs_raw)) {
   colnames(omixs_raw)[colnames(omixs_raw) == "X5FU"] <- "5FU"
@@ -300,7 +291,7 @@ if ("X5FU" %in% colnames(omixs_raw)) {
 
 drug_block    <- omixs_raw[, 23:,   drop = FALSE]
 rna_block     <- omixs_raw[, 54:, drop = FALSE]
-pathway_block <- omixs_raw[, c70:, drop = FALSE]  # verify this range is what you intend
+pathway_block <- omixs_raw[, 70:, drop = FALSE]  # verify this range is what you intend
 wes_block     <- omixs_raw[, 98:,  drop = FALSE]
 
 common_samps2 <- intersect(rownames(drug_block), rownames(meta))
