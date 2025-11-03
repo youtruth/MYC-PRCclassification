@@ -99,7 +99,7 @@ cpm <- t(t(mat) / libsize * 1e6)
 logcpm <- log2(cpm + 1)
 vars <- matrixStats::rowVars(logcpm); logcpm <- logcpm[vars > 0, , drop=FALSE]
 
-# -------------------- 2) Conformal (CV+, 5-fold, alpha=0.10) --------------------
+# Conformal (CV+, 5-fold, alpha=0.10)
 alpha <- 0.10
 y <- ifelse(grp$subtype == "MYC", 1, 0)
 X <- t(logcpm[top, , drop=FALSE])   # samples x genes
@@ -146,9 +146,6 @@ conf_counts <- conf_counts %>%
 
 
 readr::write_csv(conf_counts, "/conformal_set_counts.csv")
-
-
-
 
 
 ggplot(conf_counts, aes(prediction_set, n)) +
@@ -274,9 +271,8 @@ pds_calls <- PDSpredict(rna_df2_filtered, species = 'human', threshold = 0.6)
 smi_data <- calculateSMI(as.matrix(testdata[,-1]), datatype = "bulk", species = "human")
 
 
-##############################
+
 # 0) Setup
-############################
 # CRAN/Bioc packages you need:
 # mixOmics, limma, ggplot2 (optional), readr (optional)
 
@@ -336,8 +332,7 @@ write.table(res_sig, file = "limma_results_p0.005.txt", sep = "\t", quote = FALS
 # DIABLO (block.splsda)
 
 # Load multi-omics wide table if needed
-# omixs_raw columns must be well-defined ranges (adjust indices to your file)
-omixs_raw <- read.table("PDS_DIABLO_raw.txt", header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
+omixs_raw <- read.table("DIABLO_raw.txt", header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
 
 
 if ("X5FU" %in% colnames(omixs_raw)) {
