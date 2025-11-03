@@ -1,7 +1,7 @@
 # 1
 #Complexheatmap
 setwd("C://Users/samsung/Desktop")
-data1 <- read.table("Drug_40개_AUC_2.txt", header = TRUE, sep = "\t", row.names = 1)
+data1 <- read.table("Drug_rawdata.txt", header = TRUE, sep = "\t", row.names = 1)
 
 sample_info <- data1[,15]
 drug_data <- data1[,-15]
