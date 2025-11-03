@@ -2,16 +2,8 @@
 #Complexheatmap
 setwd("C://Users/samsung/Desktop")
 data1 <- read.table("Drug_rawdata.txt", header = TRUE, sep = "\t", row.names = 1)
-
 sample_info <- data1[,15]
 drug_data <- data1[,-15]
-
-
-group_info <- data.frame(
-  Sample = rownames(data1),
-  Group = coldata$group
-)
-
 drug_order_df <- data.frame(Gene = rownames(data1), Group = sample_info)
 drug_order_df <- drug_order_df %>% arrange(sample_info)
 sorted_drug_data <- drug_data[drug_order_df$Gene, ]
@@ -24,7 +16,6 @@ drug_order_df <- data.frame(Gene = rownames(sorted_drug_data), Group = sorted_sa
 drug_order_df <- drug_order_df %>% arrange(Group)
 sorted_drug_data <- sorted_drug_data[drug_order_df$Gene, ]  
 
-
 group_info <- data.frame(
   Sample = rownames(annotation_col), 
   Group = annotation_col$Group)
@@ -34,12 +25,6 @@ ha <- HeatmapAnnotation(Group = group_info$Group, col = list(Group = group_color
 drug_category_map <- data.frame(
   Drug = drug$Drug 
   Category = drug$ProcessCategory)
-
-heatmap_drugs <- data.frame(Drug =  colnames(sorted_drug_data))  
-drug_category_df <- merge(heatmap_drugs, drug_category_map, by = "Drug", all.x = TRUE)
-drug_category <- drug_category_df$Category
-
-
 
 heatmap_drugs <- data.frame(Drug = colnames(sorted_drug_data))  
 drug_category_df <- merge(heatmap_drugs, drug_category_map, by = "Drug", all.x = TRUE)
@@ -63,6 +48,8 @@ Heatmap(t(sorted_drug_data),
         heatmap_legend_param = list(title = "AUC"))
 
 
+
+
 # Archytype Analysis
 dir.create("results/signatures", showWarnings = FALSE)
 
@@ -79,21 +66,16 @@ BiocManager::install("depmap")
 grp <- readr::read_tsv("MYC_PRC_group_info.txt", col_types = "cc") %>%
   setNames(c("sample","subtype")) %>%
   mutate(subtype = toupper(subtype))
-
 cnt <- readr::read_tsv("MYC_PRC_rawData_20250115.txt")
 if (!"gene" %in% names(cnt)) {
   nm <- names(cnt); names(cnt)[1] <- "gene"
 }
-
 
 samples <- intersect(grp$sample, setdiff(names(cnt), "gene"))
 stopifnot(length(samples) >= 20)
 grp <- grp %>% filter(sample %in% samples) %>% slice(match(samples, sample))
 expr <- cnt %>% select(all_of(c("gene", samples))) %>% distinct(gene, .keep_all = TRUE)
 mat <- as.matrix(expr[,-1]); rownames(mat) <- expr$gene
-
-
-
 libsize <- colSums(mat)
 cpm <- t(t(mat) / libsize * 1e6)
 logcpm <- log2(cpm + 1)
@@ -106,12 +88,9 @@ X <- t(logcpm[top, , drop=FALSE])   # samples x genes
 X <- scale(X)                   
 X <- X[, apply(X, 2, function(z) sd(z, na.rm=TRUE) > 0), drop=FALSE]
 X[!is.finite(X)] <- 0
-
-
 stopifnot(nrow(X) == length(y))    
 K <- 5
 foldid <- sample(rep_len(1:K, length.out=length(y)))
-
 p_hat <- rep(NA_real_, length(y)); nonconf <- rep(NA_real_, length(y))
 for (k in 1:K) {
   tr <- foldid != k; te <- !tr
@@ -129,8 +108,6 @@ p_PRC <- sapply(t_PRC, function(th) (count_ge(nonconf, th) + 1) / (n + 1))
 predset <- ifelse(p_MYC > alpha & p_PRC > alpha, "{MYC,PRC}",
                   ifelse(p_MYC > alpha, "{MYC}",
                          ifelse(p_PRC > alpha, "{PRC}", "{}")))
-
-
 
 conf_tab <- conf_tab %>%
   dplyr::mutate(prediction_set = as.character(prediction_set))
@@ -154,6 +131,7 @@ ggplot(conf_counts, aes(prediction_set, n)) +
 ggsave("results/conformal_sets_bar.png", width=4.6, height=3.3, dpi=300)
 
 
+
 # archetypes::stepArchetypes (K=2)
 library(archetypes)
 coef_mat <- coef(aa)
@@ -162,10 +140,8 @@ coef_mat <- coef(aa)
 coef_mat <- as.matrix(coef_mat)
 storage.mode(coef_mat) <- "double"          
 
-
 grp2 <- grp[ match(rownames(coef_mat), grp$sample), , drop=FALSE ]
 stopifnot(all(rownames(coef_mat) == grp2$sample))
-
 
 y_bin <- as.numeric(grp2$subtype == "MYC")
 
@@ -198,6 +174,7 @@ ggplot(arch_df, aes(subtype, alpha_MYC, fill=subtype)) +
 ggsave("results/archetype_alpha_box.png", width=4.6, height=3.3, dpi=300)
 
 
+
 # TCGA 
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 BiocManager::install(c("TCGAbiolinks", "SummarizedExperiment", "GSVA", "GSEABase"))
@@ -215,8 +192,6 @@ if(!requireNamespace("devtools", quietly = TRUE))
 devtools::install_github('sidmall/PDSclassifier')
 
 library(TCGAbiolinks)
-
-
 options <- GDCquery(
   project = "TCGA-COAD",
   data.category = "Transcriptome Profiling",
@@ -225,8 +200,6 @@ options <- GDCquery(
 
 options
 data_path <- "C:/Users/USER/Desktop/GDCdata"
-
-
 files <- list.files(data_path, pattern = "\\.tsv$", recursive = TRUE, full.names = TRUE)
 
 data_list <- lapply(files, function(file) {
@@ -241,25 +214,17 @@ data_list <- lapply(files, function(file) {
     }
   )
 })
-
-
 data_list <- Filter(Negate(is.null), data_list)
-
-
 if (length(data_list) > 0) {
   print(head(data_list[[1]]))
 } else {
   cat("No valid files loaded.\n")
 }
 
-
 readcount_data <- do.call(cbind, data_list)
-
-
 
 rna_df2_filtered <- cbind(Gene = rna_df2_filtered$Gene, rna_df2_filtered)
 rownames(rna_df2_filtered) <- NULL  
-
 rna_df2_filtered$Gene = NULL
 
 head(readcount_data)
@@ -270,11 +235,8 @@ library(PDSclassifier)
 pds_calls <- PDSpredict(rna_df2_filtered, species = 'human', threshold = 0.6)
 smi_data <- calculateSMI(as.matrix(testdata[,-1]), datatype = "bulk", species = "human")
 
-
-
-# 0) Setup
-# CRAN/Bioc packages you need:
-# mixOmics, limma, ggplot2 (optional), readr (optional)
+# Multi-Omics
+# mixOmics, limma, ggplot2
 
 suppressPackageStartupMessages({
   library(mixOmics)
@@ -283,11 +245,9 @@ suppressPackageStartupMessages({
 
 
 # 1) Load data
-
 # path/to files (tab-delimited; rows = features, cols = samples)
-expr_path   <- "rawdata.txt"   # matrix: features x samples
-meta_path   <- "sample_list.txt"      # data.frame: samples x covariates (must include 'group' and optional 'CMS')
-
+expr_path   <- "rawdata.txt"  
+meta_path   <- "sample_list.txt"      
 X <- read.table(expr_path, header = TRUE, sep = "\t", na.strings = "NA", fill = TRUE, row.names = 1, check.names = FALSE)
 meta <- read.table(meta_path, header = TRUE, sep = "\t", na.strings = "NA", fill = TRUE, row.names = 1, check.names = FALSE)
 
@@ -301,7 +261,6 @@ group <- factor(meta$group)
 
 
 # 2) PLS-DA / sPLS-DA (mixOmics)
-
 plsda_model <- plsda(X = t(X), Y = group, ncomp = 2)  # mixOmics expects samples in rows
 plotIndiv(plsda_model,
           group = group,
@@ -330,7 +289,6 @@ write.table(res_sig, file = "limma_results_p0.005.txt", sep = "\t", quote = FALS
 
 
 # DIABLO (block.splsda)
-
 # Load multi-omics wide table if needed
 omixs_raw <- read.table("DIABLO_raw.txt", header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
 
