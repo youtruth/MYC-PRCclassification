@@ -2,20 +2,21 @@
 #Complexheatmap
 
 #setwd("C://Users/samsung/Desktop")
-#data1 <- read.table("Drug_rawdata.txt", header = TRUE, sep = "\t", row.names = 1)
-#sample_info <- data1[,15]
-#drug_data <- data1[,-15]
-#drug_order_df <- data.frame(Gene = rownames(data1), Group = sample_info)
-#drug_order_df <- drug_order_df %>% arrange(sample_info)
-#sorted_drug_data <- drug_data[drug_order_df$Gene, ]
 
-#sample_order <- order(sample_info) 
-#sorted_drug_data <- drug_data[, gene_info]
-#sorted_sample_info <- sample_info[sample_order] 
+data1 <- read.table("Drug_rawdata.txt", header = TRUE, sep = "\t", row.names = 1)
+sample_info <- data1[,15]
+drug_data <- data1[,-15]
+drug_order_df <- data.frame(Gene = rownames(data1), Group = sample_info)
+drug_order_df <- drug_order_df %>% arrange(sample_info)
+sorted_drug_data <- drug_data[drug_order_df$Gene, ]
 
-#drug_order_df <- data.frame(Gene = rownames(sorted_drug_data), Group = sorted_sample_info)
-#drug_order_df <- drug_order_df %>% arrange(Group)
-#sorted_drug_data <- sorted_drug_data[drug_order_df$Gene, ]  
+sample_order <- order(sample_info) 
+sorted_drug_data <- drug_data[, gene_info]
+sorted_sample_info <- sample_info[sample_order] 
+
+drug_order_df <- data.frame(Gene = rownames(sorted_drug_data), Group = sorted_sample_info)
+drug_order_df <- drug_order_df %>% arrange(Group)
+sorted_drug_data <- sorted_drug_data[drug_order_df$Gene, ]  
 
 group_info <- data.frame(
   Sample = rownames(annotation_col), 
